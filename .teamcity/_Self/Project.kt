@@ -18,7 +18,6 @@ object AppCommonProject : Project({
             +:refs/(pull/*)/merge
         """.trimIndent())
         param("teamcity.ui.settings.readOnly","true")
-        param("project.name", "EdFi.Installer.AppCommon")
         param("version.preReleaseLabel", "pre")
         param("appCommon.version", "2.0.0")
     }
