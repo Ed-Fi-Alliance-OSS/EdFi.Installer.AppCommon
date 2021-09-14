@@ -291,6 +291,7 @@ function Uninstall-WebApplication {
     }
 
     Get-ChildItem -Path $WebApplicationPath -Force -Recurse | Sort-Object -Property FullName -Descending | Remove-Item
+    Remove-Item -Path $WebApplicationPath
 }
 
 function Get-PortNumber {
