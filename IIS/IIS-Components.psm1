@@ -274,8 +274,6 @@ function Uninstall-WebApplication {
         [string] $WebApplicationPath
     )
 
-    Remove-Item -Path $WebApplicationPath -Force -Recurse
-    
     $webApp = Get-WebApplication -Name $WebApplicationName -Site $WebSiteName
     $appPoolName = $webApp.ApplicationPool
     if ($null -ne $webApp) {
@@ -291,6 +289,9 @@ function Uninstall-WebApplication {
     else {
         Write-Warning "Unable to remove app pool '$appPoolName' because it is in use still."
     }
+
+    Get-ChildItem -Path $WebApplicationPath -Force -Recurse | Sort-Object -Property FullName -Descending | Remove-Item
+    Remove-Item -Path $WebApplicationPath
 }
 
 function Get-PortNumber {
