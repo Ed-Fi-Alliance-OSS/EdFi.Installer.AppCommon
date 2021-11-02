@@ -29,5 +29,5 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2019.2"
+version = "2021.1"
 project(_self.AppCommonProject)
