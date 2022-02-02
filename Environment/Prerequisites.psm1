@@ -40,8 +40,8 @@ function Invoke-ThrowIfDotnetHostingBundleMissing {
 
     if(-Not $requiredVersionInstalled)
     {
-        throw ".NET Core 3.1 Hosting Bundle couldn't be found on the system, and is required for install. 
-        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/download/dotnet/3.1"
+        throw ".NET 6 Hosting Bundle couldn't be found on the system, and is required for install. 
+        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/en-us/download/dotnet/6.0"
     }
 }
 
