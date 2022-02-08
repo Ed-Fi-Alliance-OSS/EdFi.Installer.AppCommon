@@ -18,15 +18,15 @@ function Enable-IisFeature {
 }
 
 function Invoke-ThrowIfDotnetHostingBundleMissing {
-    $requiredVersion = [System.Version]::Parse("3.1.10")
+    $requiredVersion = [System.Version]::Parse("6.0.0")
 
-    $updatesPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Updates\.NET Core"
+    $updatesPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Updates\.NET"
     $items = Get-Item -ErrorAction SilentlyContinue -Path $updatesPath
     $requiredVersionInstalled = $False
 
     if($items)
     {
-        $items.GetSubKeyNames() | Where-Object { $_ -Match "Microsoft .NET Core.*Windows Server Hosting" } | ForEach-Object {
+        $items.GetSubKeyNames() | Where-Object { $_ -Match "Microsoft .NET .*Windows Server Hosting" } | ForEach-Object {
                 $registryKeyPath = Get-Item -Path "$updatesPath\$_"
                 $dotNetCoreVersion = $registryKeyPath.GetValue("PackageVersion")
                 $installedDotNetCoreVersion = [System.Version]::Parse($dotNetCoreVersion)
@@ -40,10 +40,11 @@ function Invoke-ThrowIfDotnetHostingBundleMissing {
 
     if(-Not $requiredVersionInstalled)
     {
-        throw ".NET Core 3.1 Hosting Bundle couldn't be found on the system, and is required for install. 
-        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/download/dotnet/3.1"
+        throw "The .NET 6 Hosting Bundle couldn't be found on the system, and is required for install. 
+        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/en-us/download/dotnet/6.0"
     }
 }
+
 
 function Enable-RequiredIisFeatures {
     Write-Host "Installing IIS Features in Windows" -ForegroundColor Cyan
