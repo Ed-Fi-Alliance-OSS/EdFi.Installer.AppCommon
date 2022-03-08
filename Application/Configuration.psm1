@@ -193,7 +193,7 @@ function New-ConnectionString {
     if (Test-IsPostgreSQL -Engine $ConnectionInfo.Engine) {
         $serverKey = "host"
 
-        if (0 -eq $ConnectionInfo.Port) {
+        if (0 -eq $ConnectionInfo.Port  -Or [string]::IsNullOrEmpty($ConnectionInfo.Port)) {
             $ConnectionInfo.Port = 5432
         }
 
