@@ -18,7 +18,9 @@ function Enable-IisFeature {
 }
 
 function Invoke-ThrowIfDotnetHostingBundleMissing {
-    $requiredVersion = [System.Version]::Parse("6.0.0")
+    param ([string]$VersionString = "6.0.0")
+
+    $requiredVersion = [System.Version]::Parse($VersionString)
 
     $updatesPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Updates\.NET"
     $items = Get-Item -ErrorAction SilentlyContinue -Path $updatesPath
