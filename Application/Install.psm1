@@ -321,7 +321,11 @@ function Install-EdFiApplicationIntoIIS {
 
         # Optionally disbable reporting of execution time.
         [switch]
-        $NoDuration
+        $NoDuration,
+
+        # Optionally reqiure specific dotnet version.
+        [string]
+        $DotNetVersion
     )
     $configuration = @{
         SourceLocation = $SourceLocation
@@ -333,6 +337,7 @@ function Install-EdFiApplicationIntoIIS {
         WebSitePort = $WebSitePort
         EnableAnonymousAuth = $EnableAnonymousAuth
         EnableWindowsAuth = $EnableWindowsAuth
+        DotNetVersion = $DotNetVersion
     }
 
     Write-InvocationInfo $MyInvocation
