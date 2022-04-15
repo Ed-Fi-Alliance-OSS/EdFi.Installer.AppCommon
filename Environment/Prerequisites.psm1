@@ -39,8 +39,8 @@ function Invoke-ThrowIfDotnetHostingBundleMissing {
                 $installedDotNetCoreVersion = [System.Version]::Parse($dotNetCoreVersion)
 
                 if($installedDotNetCoreVersion -ge $requiredVersion) {
-                    Write-Host "The host has the following .NET Core Hosting Bundle: $_ (MinimumVersion requirement: $requiredVersion)"  
-                    $requiredVersionInstalled = $True                      
+                    Write-Host "The host has the following .NET Core Hosting Bundle: $_ (MinimumVersion requirement: $requiredVersion)"
+                    $requiredVersionInstalled = $True
                 }
         }
     }
@@ -94,9 +94,9 @@ function Get-FileFromInternet {
     param (
         [string] [Parameter(Mandatory=$true)] $url
     )
-    
+
     New-Item -Force -ItemType Directory "downloads" | Out-Null
-    
+
     $fileName = $url.split('/')[-1]
     $output = "downloads\$fileName"
 
@@ -117,7 +117,7 @@ function Test-FileHash {
     )
 
     $calculated = (Get-FileHash $FilePath -Algorithm SHA512).Hash
- 
+
     if ($ExpectedHashValue -ne $calculated) {
         throw "Aborting install: cannot be sure of the integrity of the downloaded file " +
             "$FilePath. Please contact techsupport@ed-fi.org or create a " +
@@ -159,7 +159,7 @@ function Install-IISUrlRewriteModule {
 function Initialize-IISWithPrerequisites{
     param()
 
-    $restartNeeded = Enable-RequiredIisFeatures    
+    $restartNeeded = Enable-RequiredIisFeatures
 
     if (Get-Command "AI_GetMsiProperty" -ErrorAction SilentlyContinue) {
         $explanation = "Because the Advanced Installer package is running and responsible for MSI"
@@ -172,7 +172,7 @@ function Initialize-IISWithPrerequisites{
     Install-NuGetAndSqlServer
 
     Write-Host "Prerequisites verified" -ForegroundColor Green
-    
+
     return $restartNeeded
 }
 
@@ -204,7 +204,7 @@ function Install-DotNetCore {
 $functions = @(
     "Initialize-IISWithPrerequisites"
     "Test-MinimumPowershellInstalled"
-    "Install-DotNetCore"   
+    "Install-DotNetCore"
     "Invoke-ThrowIfDotnetHostingBundleMissing"
 )
 

@@ -190,7 +190,7 @@ function Invoke-PrepareOperatingSystem {
         Import-Module -Force "$PSScriptRoot\..\Environment\Prerequisites.psm1"
 
         Invoke-ThrowIfDotnetHostingBundleMissing -VersionString $configuration.DotNetVersion
-        
+
         Write-Info "Ensure all IIS modules are installed"
         Initialize-IISWithPrerequisites
     }
