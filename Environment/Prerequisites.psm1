@@ -20,7 +20,12 @@ function Enable-IisFeature {
 function Invoke-ThrowIfDotnetHostingBundleMissing {
     param ([string]$VersionString = "6.0.0")
 
-    $requiredVersion = [System.Version]::Parse($VersionString)
+    try {
+        $requiredVersion = [System.Version]::Parse($VersionString)
+    }
+    catch [System.ArgumentException],[System.ArgumentOutOfRangeException],[System.FormatException],[System.OverflowException] {
+        throw "The input Version '$VersionString' could not be parsed and may be invalid. Version must be a valid semantic version number."
+    }
 
     $updatesPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Updates\.NET"
     $items = Get-Item -ErrorAction SilentlyContinue -Path $updatesPath
