@@ -184,11 +184,13 @@ function New-EdFiWebsite {
 }
 
 function Invoke-PrepareOperatingSystem {
+    param([hashtable]$Configuration)
+
     Invoke-Task -name ($MyInvocation.MyCommand.Name) -task {
         Import-Module -Force "$PSScriptRoot\..\Environment\Prerequisites.psm1"
 
-        Invoke-ThrowIfDotnetHostingBundleMissing
-        
+        Invoke-ThrowIfDotnetHostingBundleMissing -VersionString $configuration.DotNetVersion
+
         Write-Info "Ensure all IIS modules are installed"
         Initialize-IISWithPrerequisites
     }
@@ -321,7 +323,11 @@ function Install-EdFiApplicationIntoIIS {
 
         # Optionally disbable reporting of execution time.
         [switch]
-        $NoDuration
+        $NoDuration,
+
+        # Optionally reqiure specific dotnet version.
+        [string]
+        $DotNetVersion = "6.0.0"
     )
     $configuration = @{
         SourceLocation = $SourceLocation
@@ -333,6 +339,7 @@ function Install-EdFiApplicationIntoIIS {
         WebSitePort = $WebSitePort
         EnableAnonymousAuth = $EnableAnonymousAuth
         EnableWindowsAuth = $EnableWindowsAuth
+        DotNetVersion = $DotNetVersion
     }
 
     Write-InvocationInfo $MyInvocation

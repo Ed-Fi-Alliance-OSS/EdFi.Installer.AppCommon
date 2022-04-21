@@ -18,7 +18,14 @@ function Enable-IisFeature {
 }
 
 function Invoke-ThrowIfDotnetHostingBundleMissing {
-    $requiredVersion = [System.Version]::Parse("6.0.0")
+    param ([string]$VersionString = "6.0.0")
+
+    try {
+        $requiredVersion = [System.Version]::Parse($VersionString)
+    }
+    catch [System.ArgumentException],[System.ArgumentOutOfRangeException],[System.FormatException],[System.OverflowException] {
+        throw "The input Version '$VersionString' could not be parsed and may be invalid. Version must be a valid semantic version number."
+    }
 
     $updatesPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Updates\.NET"
     $items = Get-Item -ErrorAction SilentlyContinue -Path $updatesPath
@@ -32,16 +39,16 @@ function Invoke-ThrowIfDotnetHostingBundleMissing {
                 $installedDotNetCoreVersion = [System.Version]::Parse($dotNetCoreVersion)
 
                 if($installedDotNetCoreVersion -ge $requiredVersion) {
-                    Write-Host "The host has the following .NET Core Hosting Bundle: $_ (MinimumVersion requirement: $requiredVersion)"  
-                    $requiredVersionInstalled = $True                      
+                    Write-Host "The host has the following .NET Core Hosting Bundle: $_ (MinimumVersion requirement: $requiredVersion)"
+                    $requiredVersionInstalled = $True
                 }
         }
     }
 
     if(-Not $requiredVersionInstalled)
     {
-        throw "The .NET 6 Hosting Bundle couldn't be found on the system, and is required for install. 
-        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/en-us/download/dotnet/6.0"
+        throw "The $VersionString .NET Hosting Bundle couldn't be found on the system, and is required for install.
+        Please install $requiredVersion or greater. Can be downloaded from https://dotnet.microsoft.com/en-us/download/dotnet"
     }
 }
 
@@ -87,9 +94,9 @@ function Get-FileFromInternet {
     param (
         [string] [Parameter(Mandatory=$true)] $url
     )
-    
+
     New-Item -Force -ItemType Directory "downloads" | Out-Null
-    
+
     $fileName = $url.split('/')[-1]
     $output = "downloads\$fileName"
 
@@ -110,7 +117,7 @@ function Test-FileHash {
     )
 
     $calculated = (Get-FileHash $FilePath -Algorithm SHA512).Hash
- 
+
     if ($ExpectedHashValue -ne $calculated) {
         throw "Aborting install: cannot be sure of the integrity of the downloaded file " +
             "$FilePath. Please contact techsupport@ed-fi.org or create a " +
@@ -152,7 +159,7 @@ function Install-IISUrlRewriteModule {
 function Initialize-IISWithPrerequisites{
     param()
 
-    $restartNeeded = Enable-RequiredIisFeatures    
+    $restartNeeded = Enable-RequiredIisFeatures
 
     if (Get-Command "AI_GetMsiProperty" -ErrorAction SilentlyContinue) {
         $explanation = "Because the Advanced Installer package is running and responsible for MSI"
@@ -165,7 +172,7 @@ function Initialize-IISWithPrerequisites{
     Install-NuGetAndSqlServer
 
     Write-Host "Prerequisites verified" -ForegroundColor Green
-    
+
     return $restartNeeded
 }
 
@@ -197,7 +204,7 @@ function Install-DotNetCore {
 $functions = @(
     "Initialize-IISWithPrerequisites"
     "Test-MinimumPowershellInstalled"
-    "Install-DotNetCore"   
+    "Install-DotNetCore"
     "Invoke-ThrowIfDotnetHostingBundleMissing"
 )
 
