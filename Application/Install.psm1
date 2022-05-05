@@ -528,7 +528,9 @@ function Add-SqlLogins {
         $DbConnectionInfo,
         [string]
         [Parameter(Mandatory=$true)]
-        $UserToCreate
+        $UserToCreate,
+        [switch]
+        $IsCustomLogin
     )
 
     $databaseServer = $DbConnectionInfo.Server
@@ -537,56 +539,60 @@ function Add-SqlLogins {
         if(Test-IsPostgreSQL $DbConnectionInfo.Engine){
             # Psql will end up lowercasing our username regardless.
             # The call to ToLower ensures the username we use here is the same one we see in the database
-            $postgresUsername = $UserToCreate.ToLower()
+            $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
+            $postgresUsername = $postgresPromptInfo.Username
+            $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+            if($IsCustomLogin){
+                $customUsernameConfirmation = Request-Information -DefaultValue 'y' -Prompt "Please enter 'y' to continue with ""$postgresUsername"" as PostgreSQL Login username. Or enter 'n' to enter a custom username"
+                if($customUsernameConfirmation -ieq 'n')
+                {
+                    $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
+                    $postgresUsername = $postgresPromptInfo.Username
+                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+                }
+            }
 
-            if(!(Test-DbLoginExistsWithSspi $databaseServer $postgresUsername -isPostgres)){
-                &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;"  | Out-Host
-                Write-Host "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$userToCreate@IIS APPPOOL"" to ""$postgresUsername"" should be manually created." -ForegroundColor Green
-            } else {
-                Write-Host "PostgreSQL Login, $postgresUsername, already exists in $databaseServer"
+            $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
+            while(!$sqlLoginCreated) {
+                $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
+                if ($retry -eq "y") {
+                    $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
+                    $postgresUsername = $postgresPromptInfo.Username
+                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+                } else {
+                    $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
+                    $postgresUsername = $postgresPromptInfo.Username
+                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+                }
+                $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
             }
         } else {
             If(-not(Get-Module -ListAvailable -Name SqlServer -ErrorAction silentlycontinue)){
                 Install-Module SqlServer -Confirm:$False -Force -AllowClobber
             }
             $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
-            if(!(Test-DbLoginExistsWithSspi $databaseServer $sqlServerUsername)) {
-                Add-SqlLogin -ServerInstance $databaseServer -LoginName $sqlServerUsername -LoginType "WindowsUser" -Enable -GrantConnectSql
-                $server = New-Object ('Microsoft.SqlServer.Management.Smo.Server') $databaseServer
-                $serverRole = $server.Roles | Where-Object {$_.Name -eq 'sysadmin'}
-                $serverRole.AddMember($sqlServerUsername)
-                Write-Host "SQL Login, $sqlServerUsername, created in $databaseServer" -ForegroundColor Green
-            } else {
-                Write-Host "SQL Login, $sqlServerUsername, already exists in $databaseServer"
+            if($IsCustomLogin){
+                $customUsernameConfirmation = Request-Information -DefaultValue 'y' -Prompt "Please enter 'y' to continue with ""$sqlServerUsername"" as SQL Login username. Or enter 'n' to enter a custom username"
+                if($customUsernameConfirmation -ieq 'n')
+                {
+                    $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
+                }
+            }
+
+            $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
+            while(!$sqlLoginCreated) {
+                $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
+                if ($retry -eq "y") {
+                    $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
+                } else {
+                    $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
+                }
+                $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
             }
         }
     } else {
         Write-Warning "Cannot automatically create application logins to the database. Operation currently not supported"
         return;
-        $userName = $DbConnectionInfo.Username
-        $password = ConvertTo-SecureString $DbConnectionInfo.Password -AsPlainText -Force
-        if(Test-IsPostgreSQL $DbConnectionInfo.Engine){
-            if(!(Test-DbLoginExistsWithBasicAuth $databaseServer $userName.ToLower() -isPostgres)){
-                &psql -U postgres -c "CREATE USER $userName WITH PASSWORD '$password' LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;" | Out-Null
-                Write-Host "SQL Login, $userName, created in $databaseServer" -ForegroundColor Green
-            } else {
-                Write-Host "SQL Login, $userName, already exists in $databaseServer"
-            }
-        } else {
-            if(-not(Get-InstalledModule SqlServer -ErrorAction silentlycontinue)){
-                Install-Module SqlServer -Confirm:$False -Force -AllowClobber
-            }
-            if(!(Test-DbLoginExistsWithBasicAuth $databaseServer $userName)) {
-                $credentials = New-Object System.Management.Automation.PSCredential ($userName, $password)
-                Add-SqlLogin -ServerInstance $databaseServer -LoginPSCredential $credentials -LoginType "SqlLogin" -Enable -GrantConnectSql
-                $server = New-Object ('Microsoft.SqlServer.Management.Smo.Server') $databaseServer
-                $serverRole = $server.Roles | Where-Object {$_.Name -eq 'sysadmin'}
-                $serverRole.AddMember($userName)
-                Write-Host "SQL Login, $userName, created in $databaseServer" -ForegroundColor Green
-            } else {
-                Write-Host "SQL Login, $userName, already exists in $databaseServer"
-            }
-        }
     }
 }
 
