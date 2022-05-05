@@ -473,6 +473,43 @@ function Prompt-For-PostgreSQL-Username ($postgresUsername) {
   return $postgresPromptInfo
 }
 
+function Add-SqlServerLogin ($databaseServer, $sqlServerUsername) {
+    $sqlLoginCreated = $False
+    try {
+        if(!(Test-DbLoginExistsWithSspi $databaseServer $sqlServerUsername)) {
+            Add-SqlLogin -ServerInstance $databaseServer -LoginName $sqlServerUsername -LoginType "WindowsUser" -Enable -GrantConnectSql
+            $server = New-Object ('Microsoft.SqlServer.Management.Smo.Server') $databaseServer
+            $serverRole = $server.Roles | Where-Object {$_.Name -eq 'sysadmin'}
+            $serverRole.AddMember($sqlServerUsername)
+            Write-Host "SQL Login, $sqlServerUsername, created in $databaseServer" -ForegroundColor Green
+        } else {
+            Write-Host "SQL Login, $sqlServerUsername, already exists in $databaseServer"
+        }
+        $sqlLoginCreated = $True
+    } catch {
+        Write-Host "Failed to add a SQL Login: " -NoNewLine -ForegroundColor Red
+        Write-Host $_.Exception.Message
+    }
+    return $sqlLoginCreated
+}
+
+function Add-PostgreSqlLogin ($databaseServer, $postgresUsername, $identityMapMessage) {
+    $sqlLoginCreated = $False
+    try {
+        if(!(Test-DbLoginExistsWithSspi $databaseServer $postgresUsername -isPostgres)){
+            &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;"  | Out-Host
+            Write-Host $identityMapMessage -ForegroundColor Green
+        } else {
+            Write-Host "PostgreSQL Login, $postgresUsername, already exists in $databaseServer"
+        }
+        $sqlLoginCreated = $True
+    } catch {
+        Write-Host "Failed to add a PostrgeSQL Login: " -NoNewLine -ForegroundColor Red
+        Write-Host $_.Exception.Message
+    }
+    return $sqlLoginCreated
+}
+
 function Add-SqlLogins {
     [CmdletBinding()]
     Param(
