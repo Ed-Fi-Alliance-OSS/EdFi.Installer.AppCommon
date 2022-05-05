@@ -550,21 +550,22 @@ function Add-SqlLogins {
                     $postgresUsername = $postgresPromptInfo.Username
                     $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
                 }
-            }
-
-            $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
-            while(!$sqlLoginCreated) {
-                $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
-                if ($retry -eq "y") {
-                    $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
-                    $postgresUsername = $postgresPromptInfo.Username
-                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-                } else {
-                    $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
-                    $postgresUsername = $postgresPromptInfo.Username
-                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-                }
                 $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
+                while(!$sqlLoginCreated) {
+                    $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
+                    if ($retry -eq "y") {
+                        $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
+                        $postgresUsername = $postgresPromptInfo.Username
+                        $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+                    } else {
+                        $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
+                        $postgresUsername = $postgresPromptInfo.Username
+                        $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
+                    }
+                    $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
+                }
+            } else {
+                Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
             }
         } else {
             If(-not(Get-Module -ListAvailable -Name SqlServer -ErrorAction silentlycontinue)){
@@ -577,17 +578,18 @@ function Add-SqlLogins {
                 {
                     $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
                 }
-            }
-
-            $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
-            while(!$sqlLoginCreated) {
-                $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
-                if ($retry -eq "y") {
-                    $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
-                } else {
-                    $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
-                }
                 $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
+                while(!$sqlLoginCreated) {
+                    $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
+                    if ($retry -eq "y") {
+                        $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
+                    } else {
+                        $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
+                    }
+                    $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
+                }
+            } else {
+                Add-SqlServerLogin $databaseServer $sqlServerUsername
             }
         }
     } else {
