@@ -445,6 +445,19 @@ function Request-Information ($prompt, $defaultValue) {
   return $confirmation
 }
 
+function Prompt-YN-Retry-Loop ($prompt, $default){
+  $result = Read-Host -Prompt $prompt
+
+  if($result -eq '') {
+    return $default
+  }
+  if($result -ne 'y' -and $result -ne 'n') {
+    return Prompt-YN-Retry-Loop $prompt $default
+  }
+
+  return $result
+}
+
 function Add-SqlLogins {
     [CmdletBinding()]
     Param(
