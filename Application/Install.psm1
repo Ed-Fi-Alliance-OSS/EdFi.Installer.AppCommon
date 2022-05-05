@@ -510,6 +510,16 @@ function Add-PostgreSqlLogin ($databaseServer, $postgresUsername, $identityMapMe
     return $sqlLoginCreated
 }
 
+function Get-DefaultPostgresPromptInfo ($userToCreate) {
+    $postgresUsername = $userToCreate.ToLower()
+    $identityMapMessage = "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$userToCreate@IIS APPPOOL"" to ""$postgresUsername"" should be manually created."
+    $postgresPromptInfo = @{
+        Username = $postgresUsername
+        IdentityMapMessage = $identityMapMessage
+    }
+    return $postgresPromptInfo
+}
+
 function Add-SqlLogins {
     [CmdletBinding()]
     Param(
