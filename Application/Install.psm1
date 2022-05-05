@@ -458,6 +458,21 @@ function Prompt-YN-Retry-Loop ($prompt, $default){
   return $result
 }
 
+function Prompt-For-SQLServer-Username ($sqlServerUsername) {
+  $sqlServerUsername = Request-Information -DefaultValue $sqlServerUsername -Prompt "Please enter a custom username for the SQL Login. You can use the username for an existing user login or a new user login will be created if it does not already exist. Please enter the username"
+  return $sqlServerUsername
+}
+
+function Prompt-For-PostgreSQL-Username ($postgresUsername) {
+  $postgresUsername = Request-Information -DefaultValue $postgresUsername -Prompt "Please enter a custom username for the PostgreSQL Login. You can use the username for an existing user login or a new user login will be created if it does not already exist. Please enter the username"
+  $identityMapMessage = "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$postgresUsername"" should be manually created."
+  $postgresPromptInfo = @{
+      Username = $postgresUsername
+      IdentityMapMessage = $identityMapMessage
+  }
+  return $postgresPromptInfo
+}
+
 function Add-SqlLogins {
     [CmdletBinding()]
     Param(
