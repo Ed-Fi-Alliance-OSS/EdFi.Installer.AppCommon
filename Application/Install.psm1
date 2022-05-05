@@ -434,6 +434,17 @@ function Test-DbLoginExistsWithBasicAuth {
     )
 }
 
+function Request-Information ($prompt, $defaultValue) {
+  $isInteractive = [Environment]::UserInteractive
+  if($isInteractive) {
+      $confirmation = Read-Host -Prompt $prompt
+  } else {
+      $confirmation = $defaultValue
+  }
+
+  return $confirmation
+}
+
 function Add-SqlLogins {
     [CmdletBinding()]
     Param(
