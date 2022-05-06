@@ -547,7 +547,7 @@ function Add-SqlLogins {
             $postgresUsername = $postgresPromptInfo.Username
             $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
             if($IsCustomLogin){
-                $customUsernameConfirmation = Prompt-YN-Retry-Loop -Default 'y' -Prompt "Please enter 'y' to continue with ""$postgresUsername"" as PostgreSQL Login username. Or enter 'n' to enter a custom username"
+                $customUsernameConfirmation = Prompt-YN-Retry-Loop -Default 'y' -Prompt "Continue with ""$postgresUsername"" for PostgreSQL Login? Press 'n' to customize [Y/n]"
                 if($customUsernameConfirmation -ieq 'n')
                 {
                     $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
@@ -577,7 +577,7 @@ function Add-SqlLogins {
             }
             $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
             if($IsCustomLogin){
-                $customUsernameConfirmation = Prompt-YN-Retry-Loop -DefaultValue 'y' -Prompt "Please enter 'y' to continue with ""$sqlServerUsername"" as SQL Login username. Or enter 'n' to enter a custom username"
+                $customUsernameConfirmation = Prompt-YN-Retry-Loop -DefaultValue 'y' -Prompt "Continue with ""$sqlServerUsername"" for SQL Login? Press 'n' to customize [Y/n]"
                 if($customUsernameConfirmation -ieq 'n')
                 {
                     $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
