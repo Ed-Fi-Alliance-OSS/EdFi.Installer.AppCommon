@@ -446,6 +446,10 @@ function Request-Information ($prompt, $defaultValue) {
 }
 
 function Prompt-YN-Retry-Loop ($prompt, $default){
+  if(-not ([Environment]::UserInteractive)) {
+    return $default
+  }
+
   $result = Read-Host -Prompt $prompt
 
   if($result -eq '') {
