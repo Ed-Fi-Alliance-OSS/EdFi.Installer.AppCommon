@@ -19,7 +19,7 @@ object AppCommonProject : Project({
         """.trimIndent())
         param("teamcity.ui.settings.readOnly","true")
         param("version.preReleaseLabel", "pre")
-        param("appCommon.version", "2.0.0")
+        param("appCommon.version", "3.0.0")
     }
 
     buildType(_self.buildTypes.BuildAppCommon)
