@@ -27,7 +27,7 @@ object ReleaseAppCommon : BuildType({
         powerShell {
             name = "Publish to Azure Artifacts"
             scriptMode = script {
-                content = "nuget push -source %azureArtifacts.feed.nuget% -apikey az *.nupkg"
+                content = "nuget push -source %azureArtifacts.feed.nuget% -apikey az EdFi.Installer.AppCommon.%appCommon.version%.nupkg"
             }
         }
     }
