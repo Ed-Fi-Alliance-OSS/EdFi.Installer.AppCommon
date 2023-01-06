@@ -1,7 +1,6 @@
 #requires -version 5
 
 $ErrorActionPreference = "Stop"
-Import-Module WebAdministration
 Import-Module IISAdministration
 
 function Open-IISManager {
@@ -180,20 +179,15 @@ function New-IISWebsite {
 
         $manager = Get-IISServerManager
 
-        $site = $manager.Sites.Add($SiteName, "https", $iisIpPortMapping, $WebsitePath)
+        $selfSignedCert = Get-SelfSignedCertificate $CertThumbprint
+        $certThumbprintBytes = Get-CertThumbprintBytes $selfSignedCert.Thumbprint
+        $site = $manager.Sites.Add($SiteName, $iisIpPortMapping, $WebsitePath, $certThumbprintBytes, 'My')
 
         Write-Debug "IIS Server Manager: Added site $($SiteName) running with http on port $($Port)"
         Write-Debug "Website setup for the physical path: $($WebsitePath)"
 
         $site.Applications["/"].ApplicationPoolName = New-IISApplicationPool $SiteName
         $site.ServerAutoStart = $true;
-
-        Push-Location IIS:\SslBindings
-        $existingBinding = Get-Item $powershellIpPortMapping -ErrorAction SilentlyContinue
-        if ($null -eq $existingBinding) {
-            Get-SelfSignedCertificate $CertThumbprint | New-Item $powershellIpPortMapping
-        }
-        Pop-Location
 
         Write-Host "Created new IIS Website: $($SiteName), running on port $($Port)" -ForegroundColor Green
 
@@ -249,17 +243,23 @@ function Uninstall-WebSite {
     )
 
     # Only remove the website if it isn't being used by another application
-    $websiteApps = Get-WebApplication -Site $WebSiteName
-    $website = Get-Website -name $WebSiteName
-    if ($null -eq $websiteApps -and $null -ne $website){
+    $website = Get-WebsiteByName $WebSiteName
+    $websiteApps = $website.Applications
+    # Empty website still has application "/"
+    if (1 -eq $websiteApps.Count -and $null -ne $website){
         Write-Debug "Removing website $WebSiteName"
-        Remove-Website -name $WebSiteName
+        $websiteAppPoolName = $website.Applications["/"].ApplicationPoolName
+        $websitePath = $website.Applications["/"].VirtualDirectories.PhysicalPath
+        $serverMgr = Get-IISServerManager
+        $serverMgr.Sites.Remove($webSite)
 
-        $websiteAppPool = get-childitem "IIS:\AppPools\$($website.applicationPool)" -ErrorAction SilentlyContinue
+        $websiteAppPool = $serverMgr.ApplicationPools[$websiteAppPoolName]
         if ($null -ne $websiteAppPool){
             Write-Debug "Removing app pool $websiteAppPool"
-            Remove-WebAppPool -name $WebSiteName
+            $serverMgr.ApplicationPools.Remove($websiteAppPool)
         }
+
+        Remove-Item -Path $websitePath
     }
     else {
         Write-Warning "Unable to remove website '$($WebSiteName)' because is not empty."
@@ -274,17 +274,25 @@ function Uninstall-WebApplication {
         [string] $WebApplicationPath
     )
 
-    $webApp = Get-WebApplication -Name $WebApplicationName -Site $WebSiteName
-    $appPoolName = $webApp.ApplicationPool
+    $webApp = Get-WebApplicationByName $WebSiteName $WebApplicationName
+
+    if ($null -eq $webapp) {
+        Write-Warning "Web application '$WebApplicationName' does not exists."
+        return;
+    }
+
+    $serverMgr = Get-IISServerManager
+    $appPoolName = $webApp.Attributes['ApplicationPool'].Value
     if ($null -ne $webApp) {
         Write-Debug "Removing application $WebApplicationName"
-        Remove-WebApplication -Name $WebApplicationName -Site $WebSiteName
+        $serverMgr.Sites[$WebSiteName].Applications.Remove($webApp)
     }
 
     $childApps = (Get-IISAppPool -Name $appPoolName).WorkerProcesses
     if ($null -ne $childApps.length){
         Write-Debug "Removing app pool $appPoolName"
-        Remove-WebAppPool -Name $appPoolName
+        $appPool = $serverMgr.ApplicationPools[$appPoolName]
+        $serverMgr.ApplicationPools.Remove($appPool)
     }
     else {
         Write-Warning "Unable to remove app pool '$appPoolName' because it is in use still."
@@ -314,6 +322,18 @@ function Get-PortNumber {
     }
     $portNumber = $bindingInformation.Split(':')[1]
     return $portNumber
+}
+
+function Get-CertThumbprintBytes {
+    param (
+        [ValidateNotNullOrEmpty()]
+        [String] $thumbprint
+    )
+    $bytes = for($i = 0; $i -lt $thumbprint.Length; $i += 2) {
+        [convert]::ToByte($thumbprint.SubString($i, 2), 16)
+    }
+
+    return $bytes
 }
 
 $functions = @(
