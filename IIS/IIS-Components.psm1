@@ -295,7 +295,7 @@ function Uninstall-WebApplication {
         $serverMgr.ApplicationPools.Remove($appPool)
     }
     else {
-        Write-Warning "Unable to remove app pool '$appPoolName' because it is in use still."
+        Write-Warning "Unable to remove app pool '$appPoolName' because it is still in use."
     }
 
     Get-ChildItem -Path $WebApplicationPath -Force -Recurse | Sort-Object -Property FullName -Descending | Remove-Item
