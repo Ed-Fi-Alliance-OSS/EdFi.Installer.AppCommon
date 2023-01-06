@@ -49,16 +49,20 @@ function Uninstall-EdFiApplicationFromIIS {
     $elapsed = Use-StopWatch {
 
         $result += Invoke-Task -name "Uninstall-WebApplication" -task {
+            Open-IISManager
             $parameters = @{
                 WebSiteName = $config.WebSiteName
                 WebApplicationName = $config.WebApplicationName
                 WebApplicationPath = $config.WebApplicationPath
             }
             Uninstall-WebApplication @parameters
+            Close-IISManager
         }
 
         $result += Invoke-Task -name "Uninstall-WebSite" -task {
+            Open-IISManager
             Uninstall-WebSite -WebSiteName $config.WebSiteName
+            Close-IISManager
         }
     }
 
