@@ -348,4 +348,4 @@ $functions = @(
     "Get-PortNumber"
 )
 
-Export-ModuleMember -Function $functions
+Export-ModuleMember -Function $functions -Cmdlet Get-IISServerManager
