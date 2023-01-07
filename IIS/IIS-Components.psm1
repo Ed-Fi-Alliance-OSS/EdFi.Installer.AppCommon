@@ -346,6 +346,8 @@ $functions = @(
     "Close-IISManager"
     "Open-IISManager"
     "Get-PortNumber"
+    "Get-WebsiteByName"
+    "Get-WebApplicationByName"
 )
 
 Export-ModuleMember -Function $functions
