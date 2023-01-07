@@ -1,7 +1,7 @@
 #requires -version 5
 
 $ErrorActionPreference = "Stop"
-Import-Module IISAdministration
+Import-Module -Force -Scope Global IISAdministration
 
 function Open-IISManager {
     Write-Debug "IIS Server Manager: reset and starting new scope"
@@ -348,4 +348,4 @@ $functions = @(
     "Get-PortNumber"
 )
 
-Export-ModuleMember -Function $functions -Cmdlet Get-IISServerManager
+Export-ModuleMember -Function $functions
