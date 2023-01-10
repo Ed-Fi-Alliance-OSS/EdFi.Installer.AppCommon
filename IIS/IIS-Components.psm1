@@ -122,7 +122,7 @@ function Get-WebApplicationByName {
         return $manager.Sites[$WebsiteName].Applications["/$WebApplicationName"]
     }
 
-    throw "Error creating IIS Application $($WebApplicationName): Website $($WebsiteName) does not exist."
+    throw "Error retrieving IIS Application $($WebApplicationName): Website $($WebsiteName) does not exist."
 }
 
 function New-IISApplicationPool {
@@ -170,6 +170,21 @@ function New-IISWebsite {
 
         return $false
     } else {
+        # Check if Port is already in use
+        $Websites = Get-IISSite
+        foreach ($Site in $Websites)
+        {
+            if($Site.Name -ne $SiteName)
+            {
+                $webBinding = $Site.Bindings | Where-Object -FilterScript {$_.BindingInformation -like "*$Port*" -and $_.protocol -eq 'https'}
+                if($webBinding)
+                {
+                    Write-Debug "Found binding $webBinding"
+                    throw "Error creating the website: $SiteName. Port: $Port is already in use by site '$Site'."
+                }
+            }
+        }
+        
         # The following two IP:Port mappings are equivalent in IIS and PS terms
         #
         # The difference is due to the interpretation of colons in powershell,
