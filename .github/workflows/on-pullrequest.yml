@@ -38,4 +38,4 @@ jobs:
 
       - name: Build the package
         shell: pwsh
-        runs: Invoke-DotnetPack "$env:PackageVersion"
+        run: Invoke-DotnetPack "$env:PackageVersion"
