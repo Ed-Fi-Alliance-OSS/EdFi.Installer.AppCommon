@@ -38,7 +38,7 @@ jobs:
         shell: pwsh
         run: |
           Import-Module ./Utility/create-package.psm1
-          Invoke-DotnetPack "$env:PackageVersion"
+          Invoke-DotnetPack "$($env:PackageVersion)-${{ github.run_number }}"
 
       - name: Upload Package as Artifact
         if: success()
