@@ -38,4 +38,6 @@ jobs:
 
       - name: Build the package
         shell: pwsh
-        run: Invoke-DotnetPack "$env:PackageVersion"
+        run: |
+          Import-Module ./Utility/create-package.psm1
+          Invoke-DotnetPack "$env:PackageVersion"
