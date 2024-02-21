@@ -33,11 +33,16 @@ jobs:
 
       - name: Checkout the Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0w
 
       - name: Build the package
         shell: pwsh
         run: |
           Import-Module ./Utility/create-package.psm1
           Invoke-DotnetPack "$env:PackageVersion"
+
+    - name: Upload Package as Artifact
+      if: success()
+      uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+      with:
+        name: NugetPackages
+        path: ${{ github.workspace }}/*.nupkg
