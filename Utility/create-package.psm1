@@ -200,7 +200,7 @@ function Invoke-DotnetPack {
         $Version
     )
 
-    dotnet pack -p:PackageVersion=$Version
+    dotnet pack -p:PackageVersion=$Version -o ./
 }
 
 Export-ModuleMember -Function Invoke-CreatePackage, Invoke-DotnetPack
