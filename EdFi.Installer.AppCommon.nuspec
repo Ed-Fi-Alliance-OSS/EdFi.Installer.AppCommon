@@ -9,7 +9,7 @@
     <copyright>Copyright © 2024, Ed-Fi Alliance, LLC and contributors.</copyright>
     <summary>Helper modules and functions for configuring and installing Ed-Fi applications</summary>
     <description>Helper modules and functions for configuring and installing Ed-Fi applications</description>
-    <readme>docs\readme.md</readme>
+    <readme>docs\README.md</readme>
   </metadata>
   <files>
     <file src="**/*.psm1" target="" />
