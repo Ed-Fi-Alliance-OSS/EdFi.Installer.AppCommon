@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PackageVersion: vars.APP_COMMON_PACKAGE_VERSION
+  PackageVersion: ${{ vars.APP_COMMON_PACKAGE_VERSION }}
 
 jobs:
   scan-actions:
