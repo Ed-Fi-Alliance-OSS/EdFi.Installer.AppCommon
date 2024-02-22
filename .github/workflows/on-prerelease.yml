@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
         with:
           name: "${{ env.PACKAGE_NAME }}-NuGet"
-          path: ./*.nupkg
+          path: ${{ github.workspace }}/*.nupkg
           if-no-files-found: error
           retention-days: 30
 
@@ -190,7 +190,7 @@ jobs:
     uses: Ed-Fi-Alliance-OSS/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@main
     with:
       base64-subjects: ${{ needs.pack.outputs.hash-code }}
-      provenance-name: AdminApi.intoto.jsonl
+      provenance-name: EdFi.Installer.AppCommon.intoto.jsonl
       upload-assets: true
       # TODO: remove this after this issue is resolved: https://github.com/slsa-framework/slsa-github-generator/issues/876
       compile-generator: true
