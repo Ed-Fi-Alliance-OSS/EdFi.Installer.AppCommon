@@ -17,7 +17,7 @@ function Get-VersionNumber {
 
     $version = $(&minver -t $prefix)
 
-    "appcommon-v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    "appcommon-v=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
     "appcommon-semver=$($version -Replace $prefix)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 }
 
