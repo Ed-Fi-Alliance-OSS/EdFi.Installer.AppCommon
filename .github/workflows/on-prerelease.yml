@@ -82,8 +82,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a #v3.0.2
+      - name: Get Artifact
+        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 #v4.1.1
         with:
           name: ${{ env.PACKAGE_NAME }}-NuGet
 
@@ -145,7 +145,7 @@ jobs:
       contents: write
     steps:
       - name: Download the SBOM
-        uses: slsa-framework/slsa-github-generator/.github/actions/secure-download-artifact@7f4fdb871876c23e455853d694197440c5a91506 #v1.5.0
+        uses: slsa-framework/slsa-github-generator/.github/actions/secure-download-artifact@07e64b653f10a80b6510f4568f685f8b7b9ea830 #v1.9.0
         with:
           name: "${{ env.PACKAGE_NAME }}-SBOM"
           path: ${{ env.MANIFEST_FILE }}
@@ -187,7 +187,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: Ed-Fi-Alliance-OSS/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.5.0
+    uses: Ed-Fi-Alliance-OSS/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@main
     with:
       base64-subjects: ${{ needs.pack.outputs.hash-code }}
       provenance-name: AdminApi.intoto.jsonl
