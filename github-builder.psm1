@@ -49,4 +49,4 @@ function Invoke-NuGetPush {
     }
 }
 
-Export-ModuleMember -Function Get-VersionNumber, Invoke-DotnetPack
+Export-ModuleMember -Function Get-VersionNumber, Invoke-DotnetPack, Invoke-NuGetPush
