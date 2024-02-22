@@ -55,3 +55,7 @@ credentials-*.xml
 #lib directory
 libs/
 libs.codegen/
+
+manifest/**/*
+buildfilelist.txt
+sbom-tool-*
