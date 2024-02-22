@@ -87,7 +87,7 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }}-NuGet
 
-      - name: Generate Software Bill of Materials (SBOM) - API
+      - name: Generate Software Bill of Materials (SBOM)
         shell: pwsh
         run: |
           $packageName = "${{ env.PACKAGE_NAME }}"
