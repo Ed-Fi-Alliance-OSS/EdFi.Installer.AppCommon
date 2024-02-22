@@ -15,10 +15,10 @@ function Get-VersionNumber {
     # Install the MinVer CLI tool
     &dotnet tool install --global minver-cli
 
-    $version = $(minver -t $prefix)
+    $version = $(&minver -t $prefix)
 
-    "appcommon-v$version" >> $env:GITHUB_OUTPUT
-    "appcommon-semver=$($version -Replace $prefix)" >> $env:GITHUB_OUTPUT
+    "appcommon-v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    "appcommon-semver=$($version -Replace $prefix)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 }
 
 function Invoke-DotnetPack {
@@ -29,7 +29,7 @@ function Invoke-DotnetPack {
         $Version
     )
 
-    dotnet pack -p:PackageVersion=$Version -o ./
+    &dotnet pack -p:PackageVersion=$Version -o ./
 }
 
 function Invoke-NuGetPush {
