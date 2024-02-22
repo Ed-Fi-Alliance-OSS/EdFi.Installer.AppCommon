@@ -38,6 +38,7 @@ jobs:
 
       - name: Set Version Numbers
         id: versions
+        shell: pwsh
         run: |
           Import-Module ./github-builder.psm1
           Get-VersionNumber
