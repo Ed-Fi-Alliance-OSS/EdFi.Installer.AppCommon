@@ -192,15 +192,5 @@ function Publish-PrereleasePackage {
     & $NuGet @parameters
 }
 
-function Invoke-DotnetPack {
-    [CmdletBinding()]
-    param (
-        [string]
-        [Parameter(Mandatory = $true)]
-        $Version
-    )
 
-    dotnet pack -p:PackageVersion=$Version -o ./
-}
-
-Export-ModuleMember -Function Invoke-CreatePackage, Invoke-DotnetPack
+Export-ModuleMember -Function Invoke-CreatePackage
