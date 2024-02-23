@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: Apache-2.0
+# Licensed to the Ed-Fi Alliance under one or more agreements.
+# The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
+# See the LICENSE and NOTICES files in the project root for more information.
+
+name: On Pull Request
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PackageVersion: ${{ vars.APP_COMMON_PACKAGE_VERSION }}
+
+jobs:
+  scan-actions:
+    name: Scan Actions
+    uses: ed-fi-alliance-oss/ed-fi-actions/.github/workflows/repository-scanner.yml@main
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout the Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Set Version Numbers
+        id: versions
+        shell: pwsh
+        run: |
+          Import-Module ./github-builder.psm1
+          Get-VersionNumber
+
+      - name: Build the package
+        shell: pwsh
+        run: |
+          $packageVersion = "${{ steps.versions.outputs.appcommon-semver }}"
+
+          Import-Module ./github-builder.psm1
+
+          Invoke-DotnetPack $packageVersion
+
+      - name: Upload Package as Artifact
+        if: success()
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+            name: NugetPackages
+            path: ${{ github.workspace }}/*.nupkg

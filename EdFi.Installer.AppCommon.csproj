@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>EdFi.Installer.AppCommon</RootNamespace>
+        <NoWarn>NU5110,NU5111</NoWarn>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <VersionPrefix>1.0.0</VersionPrefix>
+        <NuspecFile>EdFi.Installer.AppCommon.nuspec</NuspecFile>
+        <NuspecProperties>version=$(PackageVersion)</NuspecProperties>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="docs\" />
+    </ItemGroup>
+
+</Project>
