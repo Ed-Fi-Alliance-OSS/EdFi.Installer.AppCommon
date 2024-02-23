@@ -49,4 +49,85 @@ function Invoke-NuGetPush {
     }
 }
 
-Export-ModuleMember -Function Get-VersionNumber, Invoke-DotnetPack, Invoke-NuGetPush
+
+function Get-PackagesFromAzure {
+
+    $uri = "$FeedsURL/packages?api-version=6.0-preview.1"
+    $result = @{ }
+
+    foreach ($packageName in $Packages) {
+        $packageQueryUrl = "$uri&packageNameQuery=$packageName"
+        $packagesResponse = (Invoke-WebRequest -Uri $packageQueryUrl -UseBasicParsing).Content | ConvertFrom-Json
+        $latestPackageVersion = ($packagesResponse.value.versions | Where-Object { $_.isLatest -eq $True } | Select-Object -ExpandProperty version)
+
+        Write-Output "Package Name: $packageName"
+        Write-Output "Package Version: $latestPackageVersion"
+
+        $result.add(
+            $packageName.ToLower().Trim(),
+            $latestPackageVersion
+        )
+    }
+    return $result
+}
+
+function Invoke-Promote {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'False positive')]
+    param(
+        [Parameter(Mandatory = $true)]
+        [String]
+        $FeedsURL,
+
+        [Parameter(Mandatory = $true)]
+        [String]
+        $PackagesURL,
+
+        [Parameter(Mandatory = $true)]
+        [String]
+        $Username,
+
+        [Parameter(Mandatory = $true)]
+        [SecureString]
+        $Password,
+
+        [Parameter(Mandatory = $true)]
+        [String]
+        $View
+    )
+
+
+    $body = @{
+        data      = @{
+            viewId = $View
+        }
+        operation = 0
+        packages  = @("EdFi.Installer.AppCommon")
+    }
+
+    $latestPackages = Get-PackagesFromAzure
+
+    foreach ($key in $latestPackages.Keys) {
+        $body.packages += @{
+            id           = $key
+            version      = $latestPackages[$key]
+            protocolType = "NuGet"
+        }
+    }
+
+    $parameters = @{
+        Method      = "POST"
+        ContentType = "application/json"
+        Credential  = New-Object -TypeName PSCredential -ArgumentList $Username, $Password
+        URI         = "$PackagesURL/nuget/packagesBatch?api-version=5.0-preview.1"
+        Body        = ConvertTo-Json $Body -Depth 10
+    }
+
+    $parameters | Out-Host
+    $parameters.URI | Out-Host
+    $parameters.Body | Out-Host
+
+    $response = Invoke-WebRequest @parameters -UseBasicParsing
+    $response | ConvertTo-Json -Depth 10 | Out-Host
+}
+
+Export-ModuleMember -Function Get-VersionNumber, Invoke-DotnetPack, Invoke-NuGetPush, Invoke-Promote
