@@ -462,29 +462,24 @@ function Prompt-YN-Retry-Loop ($prompt, $default){
   return $result
 }
 
-function Prompt-For-SQLServer-Username ($sqlServerUsername) {
-  $sqlServerUsername = Request-Information -DefaultValue $sqlServerUsername -Prompt "Please enter a custom username for the SQL Login. You can use the username for an existing user login or a new user login will be created if it does not already exist. Please enter the username"
-  return $sqlServerUsername
-}
-
-function Prompt-For-PostgreSQL-Username ($postgresUsername) {
-  $postgresUsername = Request-Information -DefaultValue $postgresUsername -Prompt "Please enter a custom username for the PostgreSQL Login. You can use the username for an existing user login or a new user login will be created if it does not already exist. Please enter the username"
-  $identityMapMessage = "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$postgresUsername"" should be manually created."
-  $postgresPromptInfo = @{
-      Username = $postgresUsername
-      IdentityMapMessage = $identityMapMessage
-  }
-  return $postgresPromptInfo
-}
-
-function Add-SqlServerLogin ($databaseServer, $sqlServerUsername) {
+function Add-SqlServerLogin ($databaseConnection) {
+    $databaseServer = $databaseConnection.Server
+    $sqlServerUsername = $databaseConnection.Username
     $sqlLoginCreated = $False
     try {
         if(!(Test-DbLoginExistsWithSspi $databaseServer $sqlServerUsername)) {
-            Add-SqlLogin -ServerInstance $databaseServer -LoginName $sqlServerUsername -LoginType "WindowsUser" -Enable -GrantConnectSql
+            if(-not $databaseConnection.UseIntegratedSecurity){
+                $passwordSecureString = $databaseConnection.Password | ConvertTo-SecureString -AsPlainText -Force
+                $credential = [PSCredential]::New($sqlServerUsername, $passwordSecureString)
+                Add-SqlLogin -ServerInstance $databaseServer -LoginPSCredential $credential -LoginType "SqlLogin" -Enable -GrantConnectSql
+            } else {
+                Add-SqlLogin -ServerInstance $databaseServer -LoginName $sqlServerUsername -LoginType "WindowsUser" -Enable -GrantConnectSql
+            }
+
             $server = New-Object ('Microsoft.SqlServer.Management.Smo.Server') $databaseServer
             $serverRole = $server.Roles | Where-Object {$_.Name -eq 'sysadmin'}
             $serverRole.AddMember($sqlServerUsername)
+
             Write-Host "SQL Login, $sqlServerUsername, created in $databaseServer" -ForegroundColor Green
         } else {
             Write-Host "SQL Login, $sqlServerUsername, already exists in $databaseServer"
@@ -497,11 +492,19 @@ function Add-SqlServerLogin ($databaseServer, $sqlServerUsername) {
     return $sqlLoginCreated
 }
 
-function Add-PostgreSqlLogin ($databaseServer, $postgresUsername, $identityMapMessage) {
+function Add-PostgreSqlLogin ($databaseConnection, $identityMapMessage) {
+    $databaseServer = $databaseConnection.Server
+    $postgresUsername = $databaseConnection.Username
+
     $sqlLoginCreated = $False
     try {
         if(!(Test-DbLoginExistsWithSspi $databaseServer $postgresUsername -isPostgres)){
-            &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;"  | Out-Host
+            if (-not $DbConnectionInfo.ContainsKey("UseIntegratedSecurity") -or (-not $DbConnectionInfo.UseIntegratedSecurity)) {
+                &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;"  | Out-Host
+            } else {
+                $postgresPassword = $databaseConnection.Password
+                &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE PASSWORD $postgresPassword;"  | Out-Host
+            }
             Write-Host $identityMapMessage -ForegroundColor Green
         } else {
             Write-Host "PostgreSQL Login, $postgresUsername, already exists in $databaseServer"
@@ -514,15 +517,6 @@ function Add-PostgreSqlLogin ($databaseServer, $postgresUsername, $identityMapMe
     return $sqlLoginCreated
 }
 
-function Get-DefaultPostgresPromptInfo ($userToCreate) {
-    $postgresUsername = $userToCreate.ToLower()
-    $identityMapMessage = "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$userToCreate@IIS APPPOOL"" to ""$postgresUsername"" should be manually created."
-    $postgresPromptInfo = @{
-        Username = $postgresUsername
-        IdentityMapMessage = $identityMapMessage
-    }
-    return $postgresPromptInfo
-}
 
 function Add-SqlLogins {
     [CmdletBinding()]
@@ -532,73 +526,27 @@ function Add-SqlLogins {
         $DbConnectionInfo,
         [string]
         [Parameter(Mandatory=$true)]
-        $UserToCreate,
-        [switch]
-        $IsCustomLogin
+        $DefaultIntegratedSecurityUsername
     )
 
-    $databaseServer = $DbConnectionInfo.Server
-
-    if($DbConnectionInfo.UseIntegratedSecurity){
-        if(Test-IsPostgreSQL $DbConnectionInfo.Engine){
-            # Psql will end up lowercasing our username regardless.
-            # The call to ToLower ensures the username we use here is the same one we see in the database
-            $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
-            $postgresUsername = $postgresPromptInfo.Username
-            $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-            if($IsCustomLogin){
-                $customUsernameConfirmation = Prompt-YN-Retry-Loop -Default 'y' -Prompt "Continue with ""$postgresUsername"" for PostgreSQL Login? Press 'n' to customize [Y/n]"
-                if($customUsernameConfirmation -ieq 'n')
-                {
-                    $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
-                    $postgresUsername = $postgresPromptInfo.Username
-                    $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-                }
-                $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
-                while(!$sqlLoginCreated) {
-                    $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
-                    if ($retry -eq "y") {
-                        $postgresPromptInfo = Prompt-For-PostgreSQL-Username $postgresUsername
-                        $postgresUsername = $postgresPromptInfo.Username
-                        $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-                    } else {
-                        $postgresPromptInfo = Get-DefaultPostgresPromptInfo $UserToCreate
-                        $postgresUsername = $postgresPromptInfo.Username
-                        $identityMapMessage = $postgresPromptInfo.IdentityMapMessage
-                    }
-                    $sqlLoginCreated = Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
-                }
-            } else {
-                Add-PostgreSqlLogin $databaseServer $postgresUsername $identityMapMessage
-            }
+    if(Test-IsPostgreSQL $DbConnectionInfo.Engine){
+        if(-not $DbConnectionInfo.ContainsKey("Username")) {
+            $DbConnectionInfo.Username = $DefaultIntegratedSecurityUsername
+        }
+        $postgresUsername = $DbConnectionInfo.Username
+        if (-not $DbConnectionInfo.ContainsKey("UseIntegratedSecurity") -or (-not $DbConnectionInfo.UseIntegratedSecurity)) {
+            Add-PostgreSqlLogin $DbConnectionInfo "Created user ""$postgresUsername"" in PostgreSQL."
         } else {
-            If(-not(Get-Module -ListAvailable -Name SqlServer -ErrorAction silentlycontinue)){
-                Install-Module SqlServer -Confirm:$False -Force -AllowClobber
-            }
-            $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
-            if($IsCustomLogin){
-                $customUsernameConfirmation = Prompt-YN-Retry-Loop -DefaultValue 'y' -Prompt "Continue with ""$sqlServerUsername"" for SQL Login? Press 'n' to customize [Y/n]"
-                if($customUsernameConfirmation -ieq 'n')
-                {
-                    $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
-                }
-                $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
-                while(!$sqlLoginCreated) {
-                    $retry = Prompt-YN-Retry-Loop 'Press y to re-enter the username and try again. Or press n to use the default username [y/N]?' 'n'
-                    if ($retry -eq "y") {
-                        $sqlServerUsername = Prompt-For-SQLServer-Username $sqlServerUsername
-                    } else {
-                        $sqlServerUsername = "IIS APPPOOL\$UserToCreate"
-                    }
-                    $sqlLoginCreated = Add-SqlServerLogin $databaseServer $sqlServerUsername
-                }
-            } else {
-                Add-SqlServerLogin $databaseServer $sqlServerUsername
-            }
+            Add-PostgreSqlLogin $DbConnectionInfo "Created user ""$postgresUsername"" in PostgreSQL. Identity map for ""$postgresUsername@IIS APPPOOL"" to ""$postgresUsername"" should be manually created."
         }
     } else {
-        Write-Warning "Cannot automatically create application logins to the database. Operation currently not supported"
-        return;
+        If(-not(Get-Module -ListAvailable -Name SqlServer -ErrorAction silentlycontinue)){
+            Install-Module SqlServer -Confirm:$False -Force -AllowClobber
+        }
+        if($DbConnectionInfo.UseIntegratedSecurity -and -not $DbConnectionInfo.ContainsKey("Username")){
+            $DbConnectionInfo.Username = "IIS APPPOOL\$DefaultIntegratedSecurityUsername"
+        } 
+        Add-SqlServerLogin $DbConnectionInfo
     }
 }
 
