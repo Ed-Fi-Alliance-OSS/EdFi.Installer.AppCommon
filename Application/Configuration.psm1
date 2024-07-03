@@ -159,14 +159,12 @@ function Assert-DatabaseConnectionInfo {
     if (-not $DbConnectionInfo.ContainsKey("Server")) {
         throw $template + "Server"
     }
-    if (-not $DbConnectionInfo.ContainsKey("UseIntegratedSecurity")) {
+    if (-not $DbConnectionInfo.ContainsKey("UseIntegratedSecurity") -or (-not $DbConnectionInfo.UseIntegratedSecurity)) {
         if (-not $DbConnectionInfo.ContainsKey("Username")) {
             throw $template + "Username"
         }
-        if ("sqlserver" -ieq $DbConnectionInfo.Engine) {
-            if (-not $DbConnectionInfo.ContainsKey("Password")) {
-                throw $template + "Password"
-            }
+        if (-not $DbConnectionInfo.ContainsKey("Password")) {
+            throw $template + "Password"
         }
     }
 
