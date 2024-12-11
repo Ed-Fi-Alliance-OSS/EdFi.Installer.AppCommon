@@ -500,10 +500,10 @@ function Add-PostgreSqlLogin ($databaseConnection, $identityMapMessage) {
     try {
         if(!(Test-DbLoginExistsWithSspi $databaseServer $postgresUsername -isPostgres)){
             if (-not $DbConnectionInfo.ContainsKey("UseIntegratedSecurity") -or (-not $DbConnectionInfo.UseIntegratedSecurity)) {
-                &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;"  | Out-Host
-            } else {
                 $postgresPassword = $databaseConnection.Password
-                &psql -d postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE PASSWORD $postgresPassword;"  | Out-Host
+                &psql -U postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE PASSWORD '$postgresPassword';" | Out-Host
+            } else {
+                &psql -U postgres -c "CREATE USER $postgresUsername LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE;" | Out-Host
             }
             Write-Host $identityMapMessage -ForegroundColor Green
         } else {
