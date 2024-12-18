@@ -11,7 +11,7 @@ on:
 
 env:
   ARTIFACTS_API_KEY: ${{ secrets.AZURE_ARTIFACTS_PERSONAL_ACCESS_TOKEN }}
-  ARTIFACTS_FEED_URL: ${{ vars.AZURE_ARTIFACTS_FEED_URL }}
+  AZURE_ARTIFACTS_API_FEEDS : "https://feeds.dev.azure.com/ed-fi-alliance/Ed-Fi-Alliance-OSS/_apis/packaging/feeds/EdFi"
   ARTIFACTS_PACKAGES_URL: ${{ vars.ARTIFACTS_PACKAGES_URL }}
   ARTIFACTS_USERNAME: ${{ secrets.AZURE_ARTIFACTS_USER_NAME }}
 
@@ -64,11 +64,10 @@ jobs:
         shell: pwsh
         run: |
           $arguments = @{
-            FeedsURL    = "${{ env.ARTIFACTS_FEED_URL }}"
+            FeedsURL    = "${{ env.AZURE_ARTIFACTS_API_FEEDS }}"
             PackagesURL = "${{ env.ARTIFACTS_PACKAGES_URL }}"
             Username    = "${{ env.ARTIFACTS_USERNAME }}"
             View        = "release"
-            ReleaseRef  = "${{ github.ref_name }}"
             Password    = (ConvertTo-SecureString -String "${{ env.ARTIFACTS_API_KEY }}" -AsPlainText -Force)
           }
 
