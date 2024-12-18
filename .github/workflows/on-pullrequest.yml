@@ -3,58 +3,44 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-name: On Pull Request
-
+name: On Release
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  release:
+    types:
+      - released
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 env:
-  PackageVersion: ${{ vars.APP_COMMON_PACKAGE_VERSION }}
+  ARTIFACTS_API_KEY: ${{ secrets.AZURE_ARTIFACTS_PERSONAL_ACCESS_TOKEN }}
+  AZURE_ARTIFACTS_API_FEEDS : "https://feeds.dev.azure.com/ed-fi-alliance/Ed-Fi-Alliance-OSS/_apis/packaging/feeds/EdFi"
+  ARTIFACTS_PACKAGES_URL: ${{ vars.ARTIFACTS_PACKAGES_URL }}
+  ARTIFACTS_USERNAME: ${{ secrets.AZURE_ARTIFACTS_USER_NAME }}
 
 jobs:
-  scan-actions:
-    name: Scan Actions
-    uses: ed-fi-alliance-oss/ed-fi-actions/.github/workflows/repository-scanner.yml@main
-
-  build:
-    name: Build Package
+  delete-pre-releases:
+    name: Delete Unnecessary Pre-Releases
     runs-on: ubuntu-latest
     steps:
-
-      - name: Checkout the Repo
+      - name: Checkout the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
 
-      - name: Set Version Numbers
-        id: versions
+  promote-Azure-artifact:
+    name: Promote Azure Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Promote Package
         shell: pwsh
         run: |
+          $arguments = @{
+            FeedsURL    = "${{ env.AZURE_ARTIFACTS_API_FEEDS }}"
+            PackagesURL = "${{ env.ARTIFACTS_PACKAGES_URL }}"
+            Username    = "${{ env.ARTIFACTS_USERNAME }}"
+            View        = "release"
+            Password    = (ConvertTo-SecureString -String "test123" -AsPlainText -Force)
+          }
+
           Import-Module ./github-builder.psm1
-          Get-VersionNumber
-
-      - name: Build the package
-        shell: pwsh
-        run: |
-          $packageVersion = "${{ steps.versions.outputs.appcommon-semver }}"
-
-          Import-Module ./github-builder.psm1
-
-          Invoke-DotnetPack $packageVersion
-
-      - name: Upload Package as Artifact
-        if: success()
-        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
-        with:
-            name: NugetPackages
-            path: ${{ github.workspace }}/*.nupkg
+          Invoke-Promote @arguments
