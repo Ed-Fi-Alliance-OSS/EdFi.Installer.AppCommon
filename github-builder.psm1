@@ -85,8 +85,8 @@ function Get-PackagesFromAzure {
         $packagesResponse = (Invoke-WebRequest -Uri $packageQueryUrl -UseBasicParsing).Content | ConvertFrom-Json
         $latestPackageVersion = ($packagesResponse.value.versions | Where-Object { $_.isLatest -eq $True } | Select-Object -ExpandProperty version)
 
-        Write-Output "Package Name: $packageName"
-        Write-Output "Package Version: $latestPackageVersion"
+        Write-Host "Package Name: $packageName"
+        Write-Host "Package Version: $latestPackageVersion"
 
         $result.add(
             $packageName.ToLower().Trim(),
@@ -129,17 +129,15 @@ function Invoke-Promote {
         $View
     )
 
-    $packages = @("EdFi.Installer.AppCommon")
-
     $body = @{
         data      = @{
             viewId = $View
         }
         operation = 0
-        packages  = $packages
+        packages  = @()
     }
 
-    $latestPackages = Get-PackagesFromAzure -Packages $packages
+    $latestPackages = Get-PackagesFromAzure -Packages "EdFi.Installer.AppCommon"
 
     foreach ($key in $latestPackages.Keys) {
         $body.packages += @{
