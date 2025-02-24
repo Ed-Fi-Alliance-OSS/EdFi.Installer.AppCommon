@@ -10,7 +10,7 @@ function Get-NuGetPackage {
     .DESCRIPTION
         Uses nuget command line to download a NuGet package and unzip it into an output
         directory. Uses the Ed-Fi Azure Artifacts package feed by default. Default output directory
-        is .\downloads.
+        is ./downloads.
     .PARAMETER packageName
         Alias "applicationId". Name of the package to download.
     .PARAMETER packageVersion
@@ -38,7 +38,7 @@ function Get-NuGetPackage {
         $PackageVersion,
 
         [string]
-        $OutputDirectory = '.\downloads',
+        $OutputDirectory = './downloads',
 
         [string]
         $PackageSource = "https://pkgs.dev.azure.com/ed-fi-alliance/Ed-Fi-Alliance-OSS/_packaging/EdFi/nuget/v3/index.json",
