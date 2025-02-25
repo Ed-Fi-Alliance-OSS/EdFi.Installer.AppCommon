@@ -102,6 +102,12 @@ function Get-NuGetPackage {
     Move-Item -Force -Path "$OutputDirectory/$PackageName.$PackageVersion-temp/*" -Destination $packageDestinationPath
     Remove-Item -Recurse -Force "$OutputDirectory/$PackageName.$PackageVersion-temp/" | Out-Null
 
+    if ($ExcludeVersion) {
+        Remove-Item -Recurse -Force "$OutputDirectory/$($PackageName.ToLower())/$PackageVersion" | Out-Null
+    } else {
+        Remove-Item -Recurse -Force "$OutputDirectory/$($PackageName.ToLower())" | Out-Null
+    }
+
     if(Test-Path $temporaryProjectDirectory) {
         Remove-Item -Path $temporaryProjectDirectory -Recurse -Force | Out-Null
     }
