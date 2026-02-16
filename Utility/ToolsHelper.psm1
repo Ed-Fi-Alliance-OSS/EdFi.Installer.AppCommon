@@ -191,7 +191,7 @@ function Invoke-DbDeploy {
 	.PARAMETER ToolsPath
     Path where the dotnet tools are installed. Optional. Defaults to tools" under Ed-Fi-ODS-Implementation.
 
-    .PARAMETER DataStandard
+    .PARAMETER StandardVersion
     The version of the data standard to use. Optional. Defaults to '5.1.0'.
 
     .EXAMPLE
