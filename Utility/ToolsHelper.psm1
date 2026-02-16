@@ -191,6 +191,9 @@ function Invoke-DbDeploy {
 	.PARAMETER ToolsPath
     Path where the dotnet tools are installed. Optional. Defaults to tools" under Ed-Fi-ODS-Implementation.
 
+    .PARAMETER StandardVersion
+    The version of the data standard to use. Optional. Defaults to '5.1.0'.
+
     .EXAMPLE
     Deploy the ODS database with GrandBend and Sample extensions and with
     Change Queries enabled, to the "EdFi_Ods" database on a local SQL Server instance:
@@ -206,6 +209,7 @@ function Invoke-DbDeploy {
             "C:\Source\3.x\Ed-Fi-Ods-Implementation\Application\EdFi.Ods.Extensions.Sample\SupportingArtifacts\Database"
         )
         Features = @("Changes")
+        StandardVersion = "5.1.0"
     }
     Invoke-DbDeploy @params
     #>
@@ -235,7 +239,10 @@ function Invoke-DbDeploy {
 
         [Parameter(Mandatory = $true)] [string] $ToolsPath,
 
-        [Int] $DatabaseTimeoutInSeconds
+        [Int] $DatabaseTimeoutInSeconds,
+
+        [String] $StandardVersion = '5.1.0'
+
     )
 
     $databaseIdLookup = @{
@@ -252,10 +259,10 @@ function Invoke-DbDeploy {
 
     $hasFeatures = ($Features.count -gt 0)
     if ($hasFeatures) {
-        & $tool $Verb -e $Engine -d $databaseType -c "$ConnectionString" -t $DatabaseTimeoutInSeconds -f $Features -p $FilePaths | Write-Host
+        & $tool $Verb -e $Engine -d $databaseType -c "$ConnectionString" -t $DatabaseTimeoutInSeconds -f $Features -p $FilePaths -s $StandardVersion | Write-Host
     }
     else {
-        & $tool $Verb -e $Engine -d $databaseType -c "$ConnectionString" -t $DatabaseTimeoutInSeconds -p $FilePaths | Write-Host
+        & $tool $Verb -e $Engine -d $databaseType -c "$ConnectionString" -t $DatabaseTimeoutInSeconds -p $FilePaths -s $StandardVersion | Write-Host
     }
 
     <#
