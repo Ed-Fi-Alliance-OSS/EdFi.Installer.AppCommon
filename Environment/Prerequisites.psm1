@@ -18,7 +18,7 @@ function Enable-IisFeature {
 }
 
 function Invoke-ThrowIfDotnetHostingBundleMissing {
-    param ([string]$VersionString = "8.0.0")
+    param ([string]$VersionString = "10.0.0")
 
     try {
         $requiredVersion = [System.Version]::Parse($VersionString)
