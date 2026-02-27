@@ -327,7 +327,7 @@ function Install-EdFiApplicationIntoIIS {
 
         # Optionally reqiure specific dotnet version.
         [string]
-        $DotNetVersion = "8.0.0"
+        $DotNetVersion = "10.0.0"
     )
     $configuration = @{
         SourceLocation = $SourceLocation
