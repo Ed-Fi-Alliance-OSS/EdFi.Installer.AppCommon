@@ -83,7 +83,7 @@ jobs:
           fetch-depth: 0
 
       - name: Get Artifact
-        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 #v4.1.1
+        uses: dawidd6/action-download-artifact@80620a5d27ce0ae443b965134db88467fc607b43 #v7
         with:
           name: ${{ env.PACKAGE_NAME }}-NuGet
 
@@ -210,7 +210,7 @@ jobs:
           fetch-depth: 0
 
       - name: Get Artifact
-        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 #v4.1.1
+        uses: dawidd6/action-download-artifact@80620a5d27ce0ae443b965134db88467fc607b43 #v7
         with:
           name: ${{ env.PACKAGE_NAME }}-NuGet
 
