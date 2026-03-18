@@ -273,7 +273,7 @@ function Install-EdFiApplicationIntoIIS {
 
     .EXAMPLE
         $parameters = @{
-            sourceLocation = "c:\temp\EdFi.Ods.WebApi.EFA.3.4.0-b12345"
+            sourceLocation = "c:\temp\EdFi.Ods.WebApi.EFA.3.5.0-b12345"
             WebApplicationPath = "c:\inetpub\OdsRoot\WebApi"
             webApplicationName = "WebApi"
         }
