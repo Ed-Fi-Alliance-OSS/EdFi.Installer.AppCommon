@@ -52,7 +52,7 @@ function Get-NuGetPackage {
     # Therefore, when creating a package defined by a .nuspec file,
     # we must create an empty project and then delete it after packing is complete
 
-    $temporaryProjectDirectory = "$(Get-RepositoryResolvedPath)temporary-project"
+    $temporaryProjectDirectory = Join-Path (Get-Location) "temporary-project"
     $temporaryProjectName = "temporary-project"
 
     $parameters = @(
@@ -90,13 +90,17 @@ function Get-NuGetPackage {
     Write-Host -ForegroundColor Magenta "& dotnet $parameters"
     & dotnet $parameters | Out-Null
 
-    if (-not (Test-Path "$OutputDirectory/$PackageName.$PackageVersion-temp/")) {
-        New-Item -Path "$OutputDirectory/$PackageName.$PackageVersion-temp/" -ItemType Directory | Out-Null
+    # Clean up temp directory if it exists
+    if (Test-Path "$OutputDirectory/$PackageName.$PackageVersion-temp/") {
+        Remove-Item -Recurse -Force "$OutputDirectory/$PackageName.$PackageVersion-temp/" | Out-Null
     }
+    New-Item -Path "$OutputDirectory/$PackageName.$PackageVersion-temp/" -ItemType Directory | Out-Null
 
-    if (-not (Test-Path $packageDestinationPath)) {
-        New-Item -Path $packageDestinationPath -ItemType Directory | Out-Null
+    # Clean up destination if it exists
+    if (Test-Path $packageDestinationPath) {
+        Remove-Item -Recurse -Force $packageDestinationPath | Out-Null
     }
+    New-Item -Path $packageDestinationPath -ItemType Directory | Out-Null
 
     Move-Item -Force -Path "$OutputDirectory/$($PackageName.ToLower())/$PackageVersion/*" -Destination "$OutputDirectory/$PackageName.$PackageVersion-temp"
     Move-Item -Force -Path "$OutputDirectory/$PackageName.$PackageVersion-temp/*" -Destination $packageDestinationPath
